@@ -6,7 +6,7 @@ import sys
 # written for 2 atomic species
 # execute as: python pairCorrelation.py <file> <bin size> <cell length x> <cell length y> <cell length z>
 
-def distanceCalc(names,x,z,y):
+def distanceCalc(names,x,z,y,A,B):
    for i in range(atoms):
       for j in range(i):
          print "j: ", j, str(names[j]) + str(i)+str(j)
@@ -22,10 +22,15 @@ def distanceCalc(names,x,z,y):
          dy = dy - nint(dy / cell_y)*cell_y
          dz = dz - nint(dz / cell_z)*cell_z
          distance = sqrt(dx*dx + dy*dy + dz*dz)
-         if names[i] == names[j]:
-            print names[i] + "!" + names[j]
+         if names[i] == names[j] and names[i] == str(A):
+            print "A-A pair"
+            AA.append(distance)
+         elif names[i] == names[j] and names[i] == str(B):
+            print "B-B pair"
+            BB.append(distance)
          else: 
-            print names[i] + "*" + names[j]
+            print "A-B pair"
+            AB.append(distance)
 
 xyz = sys.argv[1]
 bin_size = int(sys.argv[2])
@@ -43,6 +48,10 @@ xyz_read.readline()
 data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
 
 names = []
+AA = []
+BB = []
+AB = []
+
 for i in range(atoms): names.append(data[i][0])
 x = np.zeros(atoms)
 y = np.zeros(atoms)
@@ -55,4 +64,12 @@ print "x: ", x
 print "y: ", y 
 print "z: ", z
 
-distanceCalc(names,x,y,z)
+#distanceCalc(names,x,y,z)
+print sorted(names)
+A = names[0]
+B = names[-1]
+print A, B
+distanceCalc(names,x,y,z,A,B)
+print AB
+print AA
+print BB

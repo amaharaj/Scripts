@@ -1,8 +1,10 @@
+from mpmath import *
 import numpy as np
 import os
 import sys
 
-# execute as: python pairCorrelation.py <file> <bin size>
+# written for 2 atomic species
+# execute as: python pairCorrelation.py <file> <bin size> <cell length x> <cell length y> <cell length z>
 
 def distanceCalc(names,x,z,y):
    for i in range(atoms):
@@ -11,10 +13,25 @@ def distanceCalc(names,x,z,y):
          print "i: ", i, str(names[i]) + str(i)+str(j)
          print "====", 'end calculation', '===='
          print '\n'
+         # vector between atoms
+         dx = x[j]-x[i]
+         dy = y[j]-y[i]
+         dz = z[j]-z[i]
+         # minimum image correction
+         dx = dx - nint(dx / cell_x)*cell_x
+         dy = dy - nint(dy / cell_y)*cell_y
+         dz = dz - nint(dz / cell_z)*cell_z
+         distance = sqrt(dx*dx + dy*dy + dz*dz)
+         if names[i] == names[j]:
+            print names[i] + "!" + names[j]
+         else: 
+            print names[i] + "*" + names[j]
 
 xyz = sys.argv[1]
-bin_size = sys.argv[2]
-bin_size = int(bin_size)
+bin_size = int(sys.argv[2])
+cell_x = int(sys.argv[3])
+cell_y = int(sys.argv[4])
+cell_z = int(sys.argv[5])
 
 xyz_read = open(xyz, 'r')
 

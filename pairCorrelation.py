@@ -1,5 +1,7 @@
 from mpmath import *
 import numpy as np
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
 import os
 import sys
 
@@ -9,10 +11,6 @@ import sys
 def distanceCalc(names,x,z,y,A,B):
    for i in range(atoms):
       for j in range(i):
-         print "j: ", j, str(names[j]) + str(i)+str(j)
-         print "i: ", i, str(names[i]) + str(i)+str(j)
-         print "====", 'end calculation', '===='
-         print '\n'
          # vector between atoms
          dx = x[j]-x[i]
          dy = y[j]-y[i]
@@ -22,16 +20,24 @@ def distanceCalc(names,x,z,y,A,B):
          dy = dy - nint(dy / cell_y)*cell_y
          dz = dz - nint(dz / cell_z)*cell_z
          distance = sqrt(dx*dx + dy*dy + dz*dz)
+         # append different pair combination arrays
          if names[i] == names[j] and names[i] == str(A):
-            print "A-A pair"
             AA.append(distance)
          elif names[i] == names[j] and names[i] == str(B):
-            print "B-B pair"
             BB.append(distance)
          else: 
-            print "A-B pair"
             AB.append(distance)
 
+# finds the maximum value of 3 variables
+def maxLength(a,b,c):
+   Max = a
+   if b > Max:
+      Max = b
+   elif c > Max:
+      Max = c
+   return Max
+
+# read in command line arguments
 xyz = sys.argv[1]
 bin_size = int(sys.argv[2])
 cell_x = int(sys.argv[3])
@@ -41,17 +47,19 @@ cell_z = int(sys.argv[5])
 xyz_read = open(xyz, 'r')
 
 # parse xyz format
-
 atoms = int(xyz_read.readline())
 xyz_read.readline()
-
 data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
 
 names = []
 AA = []
 BB = []
 AB = []
+# use the longest length of box as the maximum distance between pairs
+x = maxLength(cell_x,cell_y,cell_z)
 
+
+# fill name and coordinate arrays
 for i in range(atoms): names.append(data[i][0])
 x = np.zeros(atoms)
 y = np.zeros(atoms)
@@ -60,16 +68,23 @@ for i in range(atoms):
    x[i] = data[i][1]
    y[i] = data[i][2]
    z[i] = data[i][3]
-print "x: ", x
-print "y: ", y 
-print "z: ", z
 
-#distanceCalc(names,x,y,z)
-print sorted(names)
+# sort atomic name list and store first and last element in A and B respectively
+# one atomic species is labelled A, the other is labelled B
+names = sorted(names)
 A = names[0]
 B = names[-1]
-print A, B
 distanceCalc(names,x,y,z,A,B)
-print AB
-print AA
-print BB
+
+# plot histogram (frequency of pair combinations)
+n, bins, patches = plt.hist((AA,BB,AB),bin_size,normed=1,alpha=0.75)
+#n, bins, patches = plt.hist(BB,bin_size,facecolor='blue', alpha=0.75)
+#n, bins, patches = plt.hist(AB,bin_size,facecolor='red', alpha=0.75)
+
+plt.xlabel('Distances Between Pairs $\AA$')
+plt.ylabel('Frequency of Pair Combinations')
+plt.title('Pair Correlation Data')
+plt.grid(True)
+
+plt.show()
+

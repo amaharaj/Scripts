@@ -39,10 +39,12 @@ def maxLength(a,b,c):
 
 # read in command line arguments
 xyz = sys.argv[1]
-bin_size = int(sys.argv[2])
-cell_x = int(sys.argv[3])
-cell_y = int(sys.argv[4])
-cell_z = int(sys.argv[5])
+bin_size = raw_input('Enter Bin Size: ').split()
+cell = raw_input('Enter Length of Periodic Cell in Each Direction <x> <y> <z>: ').split()
+bin_size = int(bin_size[0])
+cell_x = int(cell[0])
+cell_y = int(cell[1])
+cell_z = int(cell[2])
 
 xyz_read = open(xyz, 'r')
 

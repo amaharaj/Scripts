@@ -6,8 +6,9 @@ import os
 import sys
 
 # written for 2 atomic species
-# execute as: python pairCorrelation.py <file> <bin size> <cell length x> <cell length y> <cell length z>
+# execute as: python pairCorrelation.py <file> 
 
+# function to calculate distance between pairs
 def distanceCalc(names,x,z,y,A,B):
    for i in range(atoms):
       for j in range(i):
@@ -28,23 +29,14 @@ def distanceCalc(names,x,z,y,A,B):
          else: 
             AB.append(distance)
 
-# finds the maximum value of 3 variables
-def maxLength(a,b,c):
-   Max = a
-   if b > Max:
-      Max = b
-   elif c > Max:
-      Max = c
-   return Max
-
 # read in command line arguments
 xyz = sys.argv[1]
 bin_size = raw_input('Enter Bin Size: ').split()
-cell = raw_input('Enter Length of Periodic Cell in Each Direction <x> <y> <z>: ').split()
+cell = raw_input('Enter Parameters for Periodic Cell <cell length x> <cell length y> <cell length z>: ').split()
 bin_size = int(bin_size[0])
-cell_x = int(cell[0])
-cell_y = int(cell[1])
-cell_z = int(cell[2])
+cell_x = float(cell[0])
+cell_y = float(cell[1])
+cell_z = float(cell[2])
 
 xyz_read = open(xyz, 'r')
 
@@ -57,9 +49,6 @@ names = []
 AA = []
 BB = []
 AB = []
-# use the longest length of box as the maximum distance between pairs
-x = maxLength(cell_x,cell_y,cell_z)
-
 
 # fill name and coordinate arrays
 for i in range(atoms): names.append(data[i][0])
@@ -79,10 +68,8 @@ B = names[-1]
 distanceCalc(names,x,y,z,A,B)
 
 # plot histogram (frequency of pair combinations)
-n, bins, patches = plt.hist((AA,BB,AB),bin_size,normed=1,alpha=0.75)
-#n, bins, patches = plt.hist(BB,bin_size,facecolor='blue', alpha=0.75)
-#n, bins, patches = plt.hist(AB,bin_size,facecolor='red', alpha=0.75)
-
+n, bins, patches = plt.hist((AA,BB,AB),bin_size,normed=1,alpha=0.75,label=[str(A)+"-"+str(A),str(B)+"-"+str(B),str(A)+"-"+str(B)])
+plt.legend()
 plt.xlabel('Distances Between Pairs $\AA$')
 plt.ylabel('Frequency of Pair Combinations')
 plt.title('Pair Correlation Data')

@@ -28,6 +28,8 @@ def matrix_multiply(matrix1,matrix2):
 def write_file(reshaped_coords, names, atoms):
    resized = open('Out.xyz','w')
    A = zip(names,reshaped_coords)
+   resized.write(str(atoms) + '\n')
+   resized.write('#comment' + '\n')
    for i in range(atoms):
       resized.write(A[i][0] + " ")
       resized.write(str(A[i][1][0]) + " " + str(A[i][1][1]) + " " + str(A[i][1][2]))

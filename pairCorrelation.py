@@ -12,17 +12,17 @@ def read_file(script, bins, cell_x, cell_y, cell_z):
    atoms = int(xyz_read.readline())
    xyz_read.readline()
    data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
-   names = []
-
    # fill name and coordinate arrays
+   ntimes = len(data)/atoms
+   names = []
    for i in range(atoms): names.append(data[i][0])
-   dim = (atoms,3)
+   dim = (len(data),3)
    r = np.zeros(dim)
-   for i in range(atoms):
+   for i in range(len(data)):
       r[i][0] = data[i][1]
       r[i][1] = data[i][2]
       r[i][2] = data[i][3]
-
+   r = r.reshape((ntimes,atoms,3)) 
    # sort atomic name list and store first and last element in A and B respectively
    # one atomic species is labelled A, the other is labelled B
    names = sorted(names)
@@ -30,7 +30,7 @@ def read_file(script, bins, cell_x, cell_y, cell_z):
    B = names[-1]
    lattice_vectors = [ [cell_x,0.0,0.0], [0.0, cell_y,0.0], [0.0,0.0,cell_z]]
 
-   return lattice_vectors, atoms, names, A, B, r
+   return lattice_vectors, atoms, names, A, B, r, ntimes
 
 def distance_pbc(r_i,r_j,lattice_vectors):
    # vector between atoms
@@ -40,7 +40,6 @@ def distance_pbc(r_i,r_j,lattice_vectors):
    cell_x = lattice_vectors[0][0]
    cell_y = lattice_vectors[1][1]
    cell_z = lattice_vectors[2][2]
-
 
    # minimum image correction
    dx = dx - nint(dx / cell_x)*cell_x
@@ -59,8 +58,8 @@ def distanceCalc(lattice_vectors,atoms,names,r,A,B):
 
       for j in range(i):
 
-         r_i = r[i]#[x[i],y[i],z[i]]
-         r_j = r[j]#[x[j],y[j],z[j]]
+         r_i = r[i]
+         r_j = r[j]
 
          distance = distance_pbc(r_i,r_j,lattice_vectors)
 
@@ -74,14 +73,14 @@ def distanceCalc(lattice_vectors,atoms,names,r,A,B):
    return AA, BB, AB
 
 
-def make_histogram(bins,rho,AA,BB,AB,A,B):
+def make_histogram(bins,rho,AA,BB,AB,A,B,ntimes):
    # Plot Radial Distribution Function
-   hist1,r = np.histogram(AA,bins)
-   hist2,r = np.histogram(BB,bins)
-   hist3,r = np.histogram(AB,bins)
-   normalization_factor = np.zeros(int(bins))
+   hist1,r = np.histogram(AA,bins,normed=True)
+   hist2,r = np.histogram(BB,bins,normed=True)
+   hist3,r = np.histogram(AB,bins,normed=True)
+   normalization_factor = np.zeros(int(bins)) 
    for i in range(int(bins)):
-      normalization_factor[i] = float(1/(4*math.pi*r[i]**2)*rho*(float(max(r)/bins)))
+      normalization_factor[i] = float(1/( (4*math.pi*r[i]**2) * rho * (float(max(r)/bins)) ))
    histAA = np.multiply(hist1,normalization_factor)
    histBB = np.multiply(hist2,normalization_factor)
    histAB = np.multiply(hist3,normalization_factor)
@@ -119,10 +118,11 @@ def main():
       sys.exit(0)
 
    # Execute the functions defined above
-   lattice_vectors,atoms,names,A,B,r = read_file(script,bins,cell_x,cell_y,cell_z)
-   AA,BB,AB = distanceCalc(lattice_vectors,atoms,names,r,A,B)
+   lattice_vectors,atoms,names,A,B,r,ntimes = read_file(script,bins,cell_x,cell_y,cell_z)
+   for i in range(len(r)):
+      AA,BB,AB = distanceCalc(lattice_vectors,atoms,names,r[i],A,B)
    rho = float(atoms)/(cell_x*cell_y*cell_z)
-   make_histogram(bins,rho,AA,BB,AB,A,B)
+   make_histogram(bins,rho,AA,BB,AB,A,B,ntimes)
 
 # This executes main() only if executed from shell
 if __name__ == '__main__':

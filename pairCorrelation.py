@@ -2,39 +2,41 @@ from mpmath import *
 import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+import math
 import os
 import sys
 
-def read_file(prog, box_size, cell_x, cell_y, cell_z):
-   xyz_read = open(prog, 'r')
-   # parse xyz format
+def read_file(script, bins, cell_x, cell_y, cell_z):
+   #parse xyz format
+   xyz_read = open(script, 'r')
    atoms = int(xyz_read.readline())
    xyz_read.readline()
    data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
    names = []
+
    # fill name and coordinate arrays
    for i in range(atoms): names.append(data[i][0])
-   x = np.zeros(atoms)
-   y = np.zeros(atoms)
-   z = np.zeros(atoms)
+   dim = (atoms,3)
+   r = np.zeros(dim)
    for i in range(atoms):
-      x[i] = data[i][1]
-      y[i] = data[i][2]
-      z[i] = data[i][3]
+      r[i][0] = data[i][1]
+      r[i][1] = data[i][2]
+      r[i][2] = data[i][3]
+
    # sort atomic name list and store first and last element in A and B respectively
    # one atomic species is labelled A, the other is labelled B
    names = sorted(names)
    A = names[0]
    B = names[-1]
    lattice_vectors = [ [cell_x,0.0,0.0], [0.0, cell_y,0.0], [0.0,0.0,cell_z]]
-   return lattice_vectors,atoms,names,A,B,x,y,z
+
+   return lattice_vectors, atoms, names, A, B, r
 
 def distance_pbc(r_i,r_j,lattice_vectors):
    # vector between atoms
    dx = r_i[0]-r_j[0]
    dy = r_i[1]-r_j[1]
    dz = r_i[2]-r_j[2]
-
    cell_x = lattice_vectors[0][0]
    cell_y = lattice_vectors[1][1]
    cell_z = lattice_vectors[2][2]
@@ -47,7 +49,7 @@ def distance_pbc(r_i,r_j,lattice_vectors):
    distance = sqrt(dx*dx + dy*dy + dz*dz)
    return distance  
 
-def distanceCalc(lattice_vectors,atoms,names,x,z,y,A,B):
+def distanceCalc(lattice_vectors,atoms,names,r,A,B):
 
    AA = []
    BB = []
@@ -57,8 +59,8 @@ def distanceCalc(lattice_vectors,atoms,names,x,z,y,A,B):
 
       for j in range(i):
 
-         r_i = [x[i],y[i],z[i]]
-         r_j = [x[j],y[j],z[j]]
+         r_i = r[i]#[x[i],y[i],z[i]]
+         r_j = r[j]#[x[j],y[j],z[j]]
 
          distance = distance_pbc(r_i,r_j,lattice_vectors)
 
@@ -72,8 +74,20 @@ def distanceCalc(lattice_vectors,atoms,names,x,z,y,A,B):
    return AA, BB, AB
 
 
-def make_histogram(bin_size,AA,BB,AB,A,B):
-   n, bins, patches = plt.hist((AA,BB,AB),bin_size,normed=1,alpha=0.75,label=[str(A)+"-"+str(A),str(B)+"-"+str(B),str(A)+"-"+str(B)])
+def make_histogram(bins,rho,AA,BB,AB,A,B):
+   # Plot Radial Distribution Function
+   hist1,r = np.histogram(AA,bins)
+   hist2,r = np.histogram(BB,bins)
+   hist3,r = np.histogram(AB,bins)
+   normalization_factor = np.zeros(int(bins))
+   for i in range(int(bins)):
+      normalization_factor[i] = float(1/(4*math.pi*r[i]**2)*rho*(float(max(r)/bins)))
+   histAA = np.multiply(hist1,normalization_factor)
+   histBB = np.multiply(hist2,normalization_factor)
+   histAB = np.multiply(hist3,normalization_factor)
+   plt.plot(r[1:],histAA,"-",label=str(A)+"-"+str(A))
+   plt.plot(r[1:],histBB,"-",label=str(B)+"-"+str(B))
+   plt.plot(r[1:],histAB,"-",label=str(A)+"-"+str(B))
    plt.legend()
    plt.xlabel('Distances Between Pairs $\AA$')
    plt.ylabel('Frequency of Pair Combinations')
@@ -93,22 +107,22 @@ def main():
       # Attempt to retrieve required input from user
       prog = sys.argv[0]
       script = sys.argv[1]
-      bin_size = float(sys.argv[2])
+      bins = float(sys.argv[2])
       cell_x = float(sys.argv[3])
       cell_y = float(sys.argv[4])
       cell_z = float(sys.argv[5])
       
    except IndexError:
       # Tell the user what they need to give
-      print '\nusage: '+prog+' <.xyz file> <bin size> <cell length x> <cell length y> <cell length z> \n'
+      print '\nusage: '+prog+' <.xyz file> <number of bins> <cell length x> <cell length y> <cell length z> \n'
       # Exit the program cleanly
       sys.exit(0)
 
-    # Execute the function defined above
-   lattice_vectors,atoms,names,A,B,x,y,z = read_file(script,bin_size,cell_x,cell_y,cell_z)
-   AA,BB,AB = distanceCalc(lattice_vectors,atoms,names,x,z,y,A,B)
-   make_histogram(bin_size,AA,BB,AB,A,B)
-
+   # Execute the functions defined above
+   lattice_vectors,atoms,names,A,B,r = read_file(script,bins,cell_x,cell_y,cell_z)
+   AA,BB,AB = distanceCalc(lattice_vectors,atoms,names,r,A,B)
+   rho = float(atoms)/(cell_x*cell_y*cell_z)
+   make_histogram(bins,rho,AA,BB,AB,A,B)
 
 # This executes main() only if executed from shell
 if __name__ == '__main__':

@@ -59,8 +59,8 @@ then
          # if the residue is not being deleted, update files to 
          # reorder atoms and residues
             flag=0
-            if [[ $counter -eq 1 ]]
-            then
+            if [[ $counter -eq 1 ]] 
+            then 
                NR=$(($NR+1))
                if [[ $(($NR%4)) -eq 0 ]]
                then
@@ -72,8 +72,8 @@ then
                   echo $(($NR-$skip)) >> reorder
                   echo $RES >> residue
                fi
-            fi
-            counter=$(($counter+1))
+            fi 
+            counter=$(($counter+1)) 
          fi 
       done < sortrnd
       # Write to output file if flag is off
@@ -87,7 +87,15 @@ then
       fi 
    done < $pdbfile
 
-   rm temp temp2
+   awk 'FNR==NR{a[NR]=$1;next}{$5=a[FNR]}1' residue out.pdb > out2.pdb
+   awk 'FNR==NR{a[NR]=$1;next}{$2=a[FNR]}1' reorder out2.pdb > out3.pdb
+
+   sed -i '$ d' out3.pdb 
+   echo "END" >> out3.pdb 
+
+   mv out3.pdb out.pdb
+
+   rm temp temp2 out2 
  
    
 else

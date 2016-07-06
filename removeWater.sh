@@ -2,7 +2,7 @@
 
 args=("$@")
 
-rm temp temp2 del out.pdb
+rm temp temp2 del out.pdb reorder residue
 
 # Input a pdb file, the number of molecules to be removed
 # and number of atoms per molecule
@@ -10,7 +10,7 @@ pdbfile=${args[0]}
 samples=${args[1]}
 natoms=${args[2]}
 
-if [[ $# -eq $natoms ]]
+if [[ $# -eq 3 ]]
 then 
    # Want the number of atoms in system so grep 'ATOM' from .pdb file
    grep 'ATOM' $pdbfile | wc -l > temp
@@ -26,41 +26,68 @@ then
    shuf -n $samples temp2 > rnd
    sort -n rnd > sortrnd
 
-   # Identify the range of lines which need to be deleted from .pdb file
-   # eg. if molecule has 3 atoms, those 3 atoms and the 'TER' card are 
-   # removed from the .pdb file (natoms + 1 lines are removed for each residue)
-  # while read p; do
-   #   for j in $(seq 0 $natoms)
-    #  do 
-     #    line=$(($p+$j))
-      #   echo $line >> del
-      #done 
-   #done < sortrnd
-
-
    ### Needs fixing - prints lines to file p times ###
    ### currently turns flag on if the randomly selected molecule ### 
    ### is the same as the residue in the pdb file ###
-   while read line; do 
+   NR=0
+   skip=0
+   delTER=0
+   echo " " >> residue
+   echo " " >> reorder 
+   while read line; do
+      counter=0 
       while read p; do
          lineCols=( $line )
+         # if all atoms in molecule of molecule have been deleted 
+         # delTER will be equal to the number of atoms
+         # turn on the flag and reset counter then skip the line
+         if [[ $delTER -eq $natoms ]]
+         then
+            flag=1
+            delTER=0 
+            break
+         fi 
+         # if residue number is equal to the randomly selected 
+         # molecule turn on the flag and update the delTER counter
          if [[ ${lineCols[4]} -eq $p ]]
          then 
             flag=1
             echo "${lineCols[4]}" 
+            delTER=$(($delTER+1))
+            break
          else 
+         # if the residue is not being deleted, update files to 
+         # reorder atoms and residues
             flag=0
-         fi
-         if [[ $flag -eq 1 ]]
-         then 
-            echo "hit"
-         else
-            echo $line >> out.pdb
+            if [[ $counter -eq 1 ]]
+            then
+               NR=$(($NR+1))
+               if [[ $(($NR%4)) -eq 0 ]]
+               then
+                  echo " " >> reorder
+                  skip=$(($skip+1))
+                  echo " " >> residue
+               else
+                  RES=$(($skip+1))
+                  echo $(($NR-$skip)) >> reorder
+                  echo $RES >> residue
+               fi
+            fi
+            counter=$(($counter+1))
          fi 
       done < sortrnd
+      # Write to output file if flag is off
+      # Skip line if flag is on
+      if [[ $flag -eq 1 ]]
+      then
+         echo "Deleting Residue"
+         echo $line
+      else
+         echo $line >> out.pdb 
+      fi 
    done < $pdbfile
 
-   rm temp temp2 
+   rm temp temp2
  
    
 else

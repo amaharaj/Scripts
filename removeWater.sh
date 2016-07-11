@@ -2,7 +2,7 @@
 
 args=("$@")
 
-rm temp temp2 del out.pdb reorder residue
+rm temp temp2 del out*.pdb reorder residue sortrnd rnd Removed_Residues
 
 # Input a pdb file, the number of molecules to be removed
 # and number of atoms per molecule
@@ -50,8 +50,7 @@ then
          # molecule turn on the flag and update the delTER counter
          if [[ ${lineCols[4]} -eq $p ]]
          then 
-            flag=1
-            echo "${lineCols[4]}" 
+            flag=1 
             delTER=$(($delTER+1))
             break
          else 
@@ -79,8 +78,8 @@ then
       # Skip line if flag is on
       if [[ $flag -eq 1 ]]
       then
-         echo "Deleting Residue"
-         echo $line
+         echo "Deleting Residue" >> Removed_Residues
+         echo $line >> Removed_Residues
       else
          echo $line >> out.pdb 
       fi 
@@ -96,18 +95,18 @@ then
 
    # use printf to properly format the .pdb file. Note that the spaces are place holders for where 
    # there may be information in a pdb file. This may need modification for other .pdb files.
-   awk '{printf "%-6s %3s %3s %1s %4s %1s %3s %1s %7s %7s %7s %5s %5s %3s %1s\n", $1, $2, $3, " ", $4, " ", $5, " ", $6, $7, $8, $9, $10, "   ", $11}' out3.pdb > out.pdb
+   awk '{printf "%-6s %4s %3s %4s %5s %3s %7s %7s %7s %5s %5s %9s %1s\n", $1, $2, $3, $4, $5, "   ", $6, $7, $8, $9, $10, "         ", $11}' out3.pdb > out.pdb
 
-   rm temp temp2 out2 temp temp2 del reorder residue 
- 
+   rm temp temp2 out2.pdb out3.pdb temp temp2 del reorder residue rnd sortrnd
    
 else
    echo " "
-   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-   echo "  Randomly removes a user-defined number of molecules   "
-   echo "  NOTE: Molecules must have the same number of atoms    "
-   echo " Ensure there are spaces separating each column in input"
-   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+   echo "  Randomly removes a user-defined number of molecules    "
+   echo "  NOTE: Molecules must have the same number of atoms     "
+   echo " Ensure there are spaces separating each column in input "
+   echo " May need to delete last digit in each of the coordinates"
+   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
    echo " "
    echo "Usage: removeWater.sh <pdbfile> <# of molecules to remove> <# of atoms / molecule>"
 fi

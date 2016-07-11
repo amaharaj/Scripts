@@ -26,18 +26,17 @@ then
    shuf -n $samples temp2 > rnd
    sort -n rnd > sortrnd
 
-   ### Needs fixing - prints lines to file p times ###
-   ### currently turns flag on if the randomly selected molecule ### 
-   ### is the same as the residue in the pdb file ###
    NR=0
    skip=0
    delTER=0
+
    echo " " >> residue
    echo " " >> reorder 
    while read line; do
       counter=0 
+      lineCols=( $line )
       while read p; do
-         lineCols=( $line )
+       #  lineCols=( $line )
          # if all atoms in molecule of molecule have been deleted 
          # delTER will be equal to the number of atoms
          # turn on the flag and reset counter then skip the line
@@ -87,23 +86,28 @@ then
       fi 
    done < $pdbfile
 
+   # Reorder and rename residues
    awk 'FNR==NR{a[NR]=$1;next}{$5=a[FNR]}1' residue out.pdb > out2.pdb
    awk 'FNR==NR{a[NR]=$1;next}{$2=a[FNR]}1' reorder out2.pdb > out3.pdb
 
+   # Remove last line and replace with "END"
    sed -i '$ d' out3.pdb 
    echo "END" >> out3.pdb 
 
-   mv out3.pdb out.pdb
+   # use printf to properly format the .pdb file. Note that the spaces are place holders for where 
+   # there may be information in a pdb file. This may need modification for other .pdb files.
+   awk '{printf "%-6s %3s %3s %1s %4s %1s %3s %1s %7s %7s %7s %5s %5s %3s %1s\n", $1, $2, $3, " ", $4, " ", $5, " ", $6, $7, $8, $9, $10, "   ", $11}' out3.pdb > out.pdb
 
-   rm temp temp2 out2 
+   rm temp temp2 out2 temp temp2 del reorder residue 
  
    
 else
    echo " "
-   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-   echo " Randomly removes a user-defined number of molecules "
-   echo " NOTE: molecules must have the same number of atoms "
-   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+   echo "  Randomly removes a user-defined number of molecules   "
+   echo "  NOTE: Molecules must have the same number of atoms    "
+   echo " Ensure there are spaces separating each column in input"
+   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
    echo " "
    echo "Usage: removeWater.sh <pdbfile> <# of molecules to remove> <# of atoms / molecule>"
 fi

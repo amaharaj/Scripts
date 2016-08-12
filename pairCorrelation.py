@@ -6,6 +6,8 @@ import math
 import os
 import sys
 
+# computes pair correlation function and expresses as a histogram
+
 def read_file(script, bins, cell_x, cell_y, cell_z):
    #parse xyz format
    xyz_read = open(script, 'r')

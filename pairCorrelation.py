@@ -10,16 +10,30 @@ import sys
 
 def read_file(script, bins, cell_x, cell_y, cell_z):
    #parse xyz format
+   nlines = 906
    xyz_read = open(script, 'r')
    atoms = int(xyz_read.readline())
    xyz_read.readline()
-   data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
+   data = []
+   counter = 0
+   for i in range(int(nlines/atoms)):
+      for j in range(atoms):
+         a = xyz_read.readline()
+         a.split(" ")
+         print a[1]
+         data.append(a)
+         counter = counter + 1
+      xyz_read.readline()
+      xyz_read.readline()
+   print len(data)
+  # data = np.genfromtxt(xyz_read, delimiter='',dtype=None)
    # fill name and coordinate arrays
    ntimes = len(data)/atoms
    names = []
    for i in range(atoms): names.append(data[i][0])
    dim = (len(data),3)
-   r = np.zeros(dim)
+   r = np.zeros(dim) 
+   print data[0]
    for i in range(len(data)):
       r[i][0] = data[i][1]
       r[i][1] = data[i][2]
@@ -86,16 +100,16 @@ def make_histogram(bins,rho,AA,BB,AB,A,B,ntimes):
    histAA = np.multiply(hist1,normalization_factor)
    histBB = np.multiply(hist2,normalization_factor)
    histAB = np.multiply(hist3,normalization_factor)
-   plt.plot(r[1:],histAA,"-",label=str(A)+"-"+str(A))
-   plt.plot(r[1:],histBB,"-",label=str(B)+"-"+str(B))
-   plt.plot(r[1:],histAB,"-",label=str(A)+"-"+str(B))
-   plt.legend()
-   plt.xlabel('Distances Between Pairs $\AA$')
-   plt.ylabel('Frequency of Pair Combinations')
-   plt.title('Pair Correlation Data')
-   plt.grid(True)
-
-   plt.show()
+#   plt.plot(r[1:],histAA,"-",label=str(A)+"-"+str(A))
+#   plt.plot(r[1:],histBB,"-",label=str(B)+"-"+str(B))
+#   plt.plot(r[1:],histAB,"-",label=str(A)+"-"+str(B))
+#   plt.legend()
+#   plt.xlabel('Distances Between Pairs $\AA$')
+#   plt.ylabel('Frequency of Pair Combinations')
+#   plt.title('Pair Correlation Data')
+#   plt.grid(True)
+#
+#   plt.show()
 
 
 
@@ -116,6 +130,7 @@ def main():
    except IndexError:
       # Tell the user what they need to give
       print '\nusage: '+prog+' <.xyz file> <number of bins> <cell length x> <cell length y> <cell length z> \n'
+      print '\nDependencies: matplotlib, mpmath, numpy'
       # Exit the program cleanly
       sys.exit(0)
 
@@ -124,7 +139,7 @@ def main():
    for i in range(len(r)):
       AA,BB,AB = distanceCalc(lattice_vectors,atoms,names,r[i],A,B)
    rho = float(atoms)/(cell_x*cell_y*cell_z)
-   make_histogram(bins,rho,AA,BB,AB,A,B,ntimes)
+  # make_histogram(bins,rho,AA,BB,AB,A,B,ntimes)
 
 # This executes main() only if executed from shell
 if __name__ == '__main__':

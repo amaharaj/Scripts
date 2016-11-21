@@ -18,14 +18,29 @@ def parse_frc(mdfrc):
     # remove white spaces and newlines from data
     newdata = []
     for i in data:
-       a = i.strip()
-       b = a.split()
+       a = i.strip("\n")
+       # since columns are set to be 8 characters wide,
+       # split columns every 8 characters
+       b = [a[_*8:(_+1)*8] for _ in range((len(a) / 8)) ]
+       b = [_.strip() for _ in b ] 
        newdata.append(b)
 
     # flatten the list of lists
     forces = [val for sublist in newdata for val in sublist]
     
     # need to group forces into 3 and print Fx, Fy, Fz to single file
+    for i in range(len(forces)):
+        # if i mod 3 = 0 then print x component
+        if (i%3==0):
+            fout.write(str(forces[i]) + "      ")
+        # if i mod 3 = 0 then print y component
+        if (i%3==1):
+            fout.write(str(forces[i]) + "      ")
+        # if i mod 3 = 0 then print z component
+        if (i%3==2):
+            fout.write(str(forces[i]) + "\n ")
+
+    fout.close()
 
 def main():
     """

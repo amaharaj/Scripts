@@ -2,55 +2,41 @@
 
 args=("$@")
 
-#if [ ! -d xsf-cv ]; then
-  # Control will enter here if $DIRECTORY doesn't exist.
- #  mkdir xsf-cv
- #  echo "making xsf-cv directory..."
-#fi
-
-#if [ ! -d xsf-trn ]; then
-  # Control will enter here if $DIRECTORY doesn't exist.
-#   mkdir xsf-trn
- #  echo "making xsf-train directory..."
-#fi
-
-#if [ ! -d xsf-tst ]; then
-  # Control will enter here if $DIRECTORY doesn't exist.
- #  mkdir xsf-tst
-  # echo "making xsf-test directory..."
-#fi
-
 path_to_xsf=${args[0]}
-file1=${args[1]}
-file2=${args[2]}
+# remove trailing slash if there is one
+path_to_xsf=${path_to_xsf%/}
+trn=${args[1]}
+tst=${args[2]}
 
 genCV ()
 { 
-rsync -avz --exclude-from <( echo $list_exclude ) $path_to_xsf xsf-cv
+rsync -avz --exclude-from 'list_exclude' $path_to_xsf xsf-cv
+#for file in $(<list_exclude); do cp "$path_to_xsf/!($file)" xsf-cv; done
 }
 
 genTrain ()
 {
-rsync -avz --include-from <( echo $file1 ) $path_to_xsf xsf-trn
+for file in $(<$trn); do cp "$path_to_xsf/$file" xsf-trn; done
 }
 
 genTest ()
 {
-rsync -avz --include-from <( echo $file2 ) $path_to_xsf xsf-tst
+for file in $(<$tst); do cp "$path_to_xsf/$file" xsf-tst; done
 }
 
 if [[ $# -eq 3 ]]
 then 
-   list_exclude=$(cat $file1 $file2)
-   genCV $list_exclude
-   genTrain #xsf-train
-   genTest #xsf-test
+   #list_exclude=$(cat $file1 $file2)
+   cat $trn $tst > list_exclude
+   genCV 
+   genTrain
+   genTest 
 elif [[ $# -eq 2 ]]
 then 
    list_exclude=${args[1]} 
-   genCV #xsf-cv
-   genTrain #xsf-train
-   genTest #xsf-test
+   genCV 
+   genTrain 
+   genTest 
 else
    echo " "
    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
